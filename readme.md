@@ -4,6 +4,14 @@
 Implementation of Bazeries Cipher using asynchronous flows and coroutines. 
 Application provides command and graphical interfaces.
 
+Features:
+* encryption of given text and files
+* decryption of given text and files
+* random key generation
+* using digit or full names key
+* _in progress_ concurrent encoding/decoding
+* _in progress_ full Polish alphabet with special characters
+
 ## build
 ```
 ./gradlew shadowJar
