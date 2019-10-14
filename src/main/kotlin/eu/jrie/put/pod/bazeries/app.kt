@@ -11,7 +11,6 @@ fun main(args: Array<String>) {
 }
 
 fun interfaceStart(args: Array<String>) {
-    println(args.joinToString())
     when(args.first().toUpperCase()) {
         CLI_OPTION -> cli(args.drop(1))
         GUI_OPTION -> gui()

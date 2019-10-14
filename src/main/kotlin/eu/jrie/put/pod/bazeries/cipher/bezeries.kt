@@ -8,18 +8,18 @@ import pl.allegro.finance.tradukisto.ValueConverters
 import java.io.InputStream
 import java.util.*
 
-// a ą b c ć d e ę f g h i j k l ł m n ń o ó p q r s ś t u v w x y z ź ż
-// aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż
-// ' ' \n . , - : ! ?
-
 typealias Receiver<R> = suspend (Flow<Char>) -> R
 
 internal class Bazeries (
     private val key: Int,
-    private val alphabet: String = ALPHABET,
+    private val useExtendedAlphabet: Boolean = false,
     private val useFullNumberName: Boolean = false
 ) {
-    private val alphabetMatrix = buildAlphabet(ALPHABET)
+
+    private val alphabet = if(useExtendedAlphabet) EXTENDED_ALPHABET else ALPHABET
+    private val width = if(useExtendedAlphabet) EXTENDED_WIDTH else WIDTH
+    private val height = if(useExtendedAlphabet) EXTENDED_HEIGHT else HEIGHT
+    private val alphabetMatrix = buildAlphabet(alphabet, width, height)
 
     private val keyword = run {
         if(useFullNumberName) ValueConverters.ENGLISH_INTEGER.asWords(key).inAlphabet()
@@ -29,11 +29,11 @@ internal class Bazeries (
             .joinToString(separator = "")
     }
 
-    private val codeMatrix = keyword.plus(ALPHABET)
+    private val codeMatrix = keyword.plus(alphabet)
         .toList()
         .distinct()
         .joinToString(separator = "")
-        .let { buildCipher(it) }
+        .let { buildCipher(it, width, height) }
 
     private var chunkSizes = mutableListOf<Int>().apply {
         key.toString()
@@ -92,9 +92,15 @@ internal class Bazeries (
 
     companion object {
         private const val ALPHABET = "abcdefghiklmnopqrstuvwxyz"
-        private const val EXTENDED_ALPHABET = "aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż \n.,!?"
+        private const val EXTENDED_ALPHABET = "aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż" +
+                "AĄBCĆDEĘFHGIJKLŁMNŃOÓPQRSŚTUVWXYZŹŻ" +
+                " \n" +
+                "!@#\$%^&*()-=_+[]{}|\\;:'\",.<>/?`~" +
+                "1234567890"
         private const val WIDTH = 5
-        private const val EXTENDED_WIDTH = 7
+        private const val HEIGHT = 5
+        private const val EXTENDED_WIDTH = 6
+        private const val EXTENDED_HEIGHT = 19
 
         private val numbers = mapOf(
             '0' to "zero",
@@ -109,8 +115,8 @@ internal class Bazeries (
             '9' to "nine"
         )
 
-        private inline fun buildMatrix(letters: String, index: (Int, Int) -> Int) = Array(letters.length / WIDTH) { y ->
-            Array(WIDTH) { x -> letters[index(x, y)] }
+        private inline fun buildMatrix(letters: String, width: Int, index: (Int, Int) -> Int) = Array(letters.length / width) { y ->
+            Array(width) { x -> letters[index(x, y)].also { println(" $x $y $it") } }
         }.also {
             it.forEach { a ->
                 a.forEach { l -> print("$l ") }
@@ -119,42 +125,9 @@ internal class Bazeries (
             println()
         }
 
-        private fun buildAlphabet(letters: String) = buildMatrix(letters) { x, y -> y + (x * WIDTH) }
-        private fun buildCipher(letters: String) = buildMatrix(letters) { x, y -> x + (y * WIDTH) }
+        private fun buildAlphabet(letters: String, width: Int, height: Int)
+                = buildMatrix(letters, width) { x, y -> (y + (x * height)).also { print(it) } }
+        private fun buildCipher(letters: String, width: Int, height: Int)
+                = buildMatrix(letters, width) { x, y -> x + (y * width) }
     }
 }
-
-//    fun encode(text: Flow<String>) = runBlocking {
-//        text.
-////        buildString {
-//            launch {
-//                text.cocollect { l ->
-//                    buildString {
-//                        repeat(chunkSize) { append(l) }
-//                    }
-//
-//                    chunker('a')
-//                }
-//
-//                text.collect { chunk ->
-//                    chunk.toList()
-//                        .reversed()
-//                        .map(::mapToCode)
-//                        .forEach { append(it) }
-//                }
-//            }
-////        }
-//    }
-//
-//    fun encode(text: String) =buildString {
-//        println("encoding: $text")
-//        println("key: $key")
-//        println("keyword: $keyword")
-//        text.toList()
-//            .filter { it != J }
-//            .map(::mapToCode)
-//            .groupBy(chunker).values
-//            .map { it.reversed() }
-//            .map { it.joinToString(separator = "") }
-//            .forEach { append(it) }
-//    }
