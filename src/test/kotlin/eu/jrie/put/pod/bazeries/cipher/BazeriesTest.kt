@@ -9,10 +9,12 @@ import org.junit.jupiter.api.Test
 internal class BazeriesTest {
 
     private lateinit var bazeries: Bazeries
+    private lateinit var result: MutableList<Char>
+    private val receiver: suspend (Flow<Char>) -> Unit = { flow -> flow.collect { result.add(it) } }
 
     @BeforeEach
-    fun initBazeries() {
-        bazeries = Bazeries(KEY)
+    fun init() {
+        result = mutableListOf()
     }
 
     companion object {
@@ -22,22 +24,18 @@ internal class BazeriesTest {
         private const val BASIC_TEXT_ENCODED_WITH_DIGIT_KEY = "qmhatrmgxs"
         private const val BASIC_TEXT_ENCODED_WITH_FULL_NAME_KEY = "plcovulbyq"
 
-        private const val EXTENDED_TEXT = ""
-        private const val EXTENDED_TEXT_ENCODED_WITH_DIGIT_KEY = ""
-        private const val EXTENDED_TEXT_ENCODED_WITH_FULL_NAME_KEY = ""
-
-        private const val BASIC_FILE_NAME = "basic_file.txt"
-        private const val EXTENDED_FILE_NAME = "extended_file.txt"
+        private const val EXTENDED_TEXT = "GżegŻóŁka#@\$"
+        private const val EXTENDED_TEXT_ENCODED_WITH_DIGIT_KEY = "n&#u\$OĄ\\H8>2"
+        private const val EXTENDED_TEXT_ENCODED_WITH_FULL_NAME_KEY = "n&#r\$ŃA\\F8>2"
     }
 
     @Test
     fun `should encode given text with basic alphabet and digit key`() {
         // given
-        val result = mutableListOf<Char>()
-        val receiver: suspend (Flow<Char>) -> Unit = { flow -> flow.collect { result.add(it) } }
+        bazeries = Bazeries(KEY)
 
         // when
-        bazeries.encode(BASIC_TEXT.byteInputStream(), receiver)
+        bazeries.encode(BASIC_TEXT.asSequence(), receiver)
 
         // then
         assertEquals(BASIC_TEXT_ENCODED_WITH_DIGIT_KEY, result.joinToString(separator = ""))
@@ -46,12 +44,10 @@ internal class BazeriesTest {
     @Test
     fun `should encode given text with basic alphabet and full name key`() {
         // given
-        val fullNameBazeries = Bazeries(KEY, useFullNumberName = true)
-        val result = mutableListOf<Char>()
-        val receiver: suspend (Flow<Char>) -> Unit = { flow -> flow.collect { result.add(it) } }
+        bazeries = Bazeries(KEY, useFullNumberName = true)
 
         // when
-        fullNameBazeries.encode(BASIC_TEXT.byteInputStream(), receiver)
+        bazeries.encode(BASIC_TEXT.asSequence(), receiver)
 
         // then
         assertEquals(BASIC_TEXT_ENCODED_WITH_FULL_NAME_KEY, result.joinToString(separator = ""))
@@ -60,11 +56,10 @@ internal class BazeriesTest {
     @Test
     fun `should decode given text with basic alphabet and digit key`() {
         // given
-        val result = mutableListOf<Char>()
-        val receiver: suspend (Flow<Char>) -> Unit = { flow -> flow.collect { result.add(it) } }
+        bazeries = Bazeries(KEY)
 
         // when
-        bazeries.decode(BASIC_TEXT_ENCODED_WITH_DIGIT_KEY.byteInputStream(), receiver)
+        bazeries.decode(BASIC_TEXT_ENCODED_WITH_DIGIT_KEY.asSequence(), receiver)
 
         // then
         assertEquals(BASIC_TEXT, result.joinToString(separator = ""))
@@ -73,14 +68,60 @@ internal class BazeriesTest {
     @Test
     fun `should decode given text with basic alphabet and full name key`() {
         // given
-        val fullNameBazeries = Bazeries(KEY, useFullNumberName = true)
-        val result = mutableListOf<Char>()
-        val receiver: suspend (Flow<Char>) -> Unit = { flow -> flow.collect { result.add(it) } }
+        bazeries = Bazeries(KEY, useFullNumberName = true)
 
         // when
-        fullNameBazeries.decode(BASIC_TEXT_ENCODED_WITH_FULL_NAME_KEY.byteInputStream(), receiver)
+        bazeries.decode(BASIC_TEXT_ENCODED_WITH_FULL_NAME_KEY.asSequence(), receiver)
 
         // then
         assertEquals(BASIC_TEXT, result.joinToString(separator = ""))
+    }
+
+    @Test
+    fun `should encode given text with extended alphabet and digit key`() {
+        // given
+        bazeries = Bazeries(KEY, useExtendedAlphabet = true)
+
+        // when
+        bazeries.encode(EXTENDED_TEXT.asSequence(), receiver)
+
+        // then
+        assertEquals(EXTENDED_TEXT_ENCODED_WITH_DIGIT_KEY, result.joinToString(separator = ""))
+    }
+
+    @Test
+    fun `should encode given text with extended alphabet and full name key`() {
+        // given
+        bazeries = Bazeries(KEY, useFullNumberName = true, useExtendedAlphabet = true)
+
+        // when
+        bazeries.encode(EXTENDED_TEXT.asSequence(), receiver)
+
+        // then
+        assertEquals(EXTENDED_TEXT_ENCODED_WITH_FULL_NAME_KEY, result.joinToString(separator = ""))
+    }
+
+    @Test
+    fun `should decode given text with extended alphabet and digit key`() {
+        // given
+        bazeries = Bazeries(KEY, useExtendedAlphabet = true)
+
+        // when
+        bazeries.decode(EXTENDED_TEXT_ENCODED_WITH_DIGIT_KEY.asSequence(), receiver)
+
+        // then
+        assertEquals(EXTENDED_TEXT, result.joinToString(separator = ""))
+    }
+
+    @Test
+    fun `should decode given text with extended alphabet and full name key`() {
+        // given
+        bazeries = Bazeries(KEY, useFullNumberName = true, useExtendedAlphabet = true)
+
+        // when
+        bazeries.decode(EXTENDED_TEXT_ENCODED_WITH_FULL_NAME_KEY.asSequence(), receiver)
+
+        // then
+        assertEquals(EXTENDED_TEXT, result.joinToString(separator = ""))
     }
 }

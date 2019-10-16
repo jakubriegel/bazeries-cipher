@@ -1,6 +1,7 @@
 package eu.jrie.put.pod.bazeries.cipher
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -14,7 +15,7 @@ typealias Receiver<R> = suspend (Flow<Char>) -> R
 internal class Bazeries (
     private val key: Int,
     private val useFullNumberName: Boolean = false,
-    private val useExtendedAlphabet: Boolean = false
+    useExtendedAlphabet: Boolean = false
 ) {
 
     private val alphabet = if(useExtendedAlphabet) EXTENDED_ALPHABET else ALPHABET
@@ -34,7 +35,7 @@ internal class Bazeries (
         .toList()
         .distinct()
         .joinToString(separator = "")
-        .let { buildCipher(it, width, height) }
+        .let { buildCipher(it, width) }
 
     private var chunkSizes = mutableListOf<Int>().apply {
         key.toString()
@@ -59,8 +60,22 @@ internal class Bazeries (
     private fun mapToCode(l: Char) = findInMatrix(alphabetMatrix, l).let { codeMatrix[it.first][it.second] }
     private fun mapToAlphabet(l: Char) = findInMatrix(codeMatrix, l).let { alphabetMatrix[it.first][it.second] }
 
-    fun <R> encode(textStream: InputStream, receiver: Receiver<R>) = textStream.process(::mapToCode, receiver)
-    fun <R> decode(textStream: InputStream, receiver: Receiver<R>) = textStream.process(::mapToAlphabet, receiver)
+    fun <R> encode(textSequence: Sequence<Char>, receiver: Receiver<R>) = textSequence.process(::mapToCode, receiver)
+    fun <R> decode(textStream: Sequence<Char>, receiver: Receiver<R>) = textStream.process(::mapToAlphabet, receiver)
+
+    private fun <R> Sequence<Char>.process(mapper: (Char) -> Char, receiver: Receiver<R>) = runBlocking {
+        println("key: $key")
+        println("keyword: $keyword")
+        flow {
+            chunkText(getAndFilterCharacters(this@process)).collect { chunk ->
+                while (chunk.isNotEmpty()) {
+                    emit(mapper(chunk.pop()))
+                }
+            }
+        }.let { receiver(it) }
+    }
+
+    private fun getAndFilterCharacters(text: Sequence<Char>) = text.filter { alphabet.contains(it) } .asFlow()
 
     private fun <R> InputStream.process(mapper: (Char) -> Char, receiver: Receiver<R>) = runBlocking {
         println("key: $key")
@@ -134,8 +149,8 @@ internal class Bazeries (
         }
 
         private fun buildAlphabet(letters: String, width: Int, height: Int)
-                = buildMatrix(letters, width) { x, y -> (y + (x * height)).also { print(it) } }
-        private fun buildCipher(letters: String, width: Int, height: Int)
+                = buildMatrix(letters, width) { x, y -> (y + (x * height)) }
+        private fun buildCipher(letters: String, width: Int)
                 = buildMatrix(letters, width) { x, y -> x + (y * width) }
 
         fun randomKey() = (1..999_999).random()

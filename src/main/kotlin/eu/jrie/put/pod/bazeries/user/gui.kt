@@ -137,9 +137,10 @@ class AppView : View() {
     private fun encodeAction(text: CharSequence, key: CharSequence, useFullNumberNameKey: Boolean, useExtendedAlphabet: Boolean) {
         when(mode) {
             Mode.TEXT -> {
+                println(text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
                 when(key.isBlank()) {
                     true -> codedContent.text = cipher(text.toString(), useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet)
-                    false ->codedContent.text = cipher(text.toString(), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet)
+                    false ->codedContent.text = cipher(text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet)
                 }
             }
             Mode.FILE -> {when(key.isBlank()) {
