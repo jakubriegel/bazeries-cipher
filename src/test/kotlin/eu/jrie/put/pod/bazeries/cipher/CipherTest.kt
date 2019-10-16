@@ -1,5 +1,6 @@
 package eu.jrie.put.pod.bazeries.cipher
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,32 +21,48 @@ internal class CipherTest {
     }
 
     @Test
-    fun `should encode given text with basic alphabet`() {
+    @ExperimentalCoroutinesApi
+    fun `should encode given text with basic alphabet and digit name key`() {
         // when
-        val result = cipher(TEXT, KEY)
+        val result = cipher(TEXT, KEY, useFullNumberKeyName = false, useExtendedAlphabet = false)
 
         // then
         assertEquals(TEXT_ENCODED, result)
     }
 
     @Test
-    fun `should encode given file with basic alphabet`() {
+    @ExperimentalCoroutinesApi
+    fun `should encode given file with basic alphabet and digit name key`() {
         // given
         val file = createTempFile().apply { writeText(TEXT) }
 
         // when
-        val result = cipher(file, KEY)
+        val result = cipher(file, KEY, useFullNumberKeyName = false, useExtendedAlphabet = false)
 
         // then
         assertEquals(TEXT_ENCODED, result.readText())
     }
 
     @Test
+    @ExperimentalCoroutinesApi
     fun `should decode given text with basic alphabet`() {
+        // when
+        val result = decipher(TEXT_ENCODED, KEY, useFullNumberKeyName = false, useExtendedAlphabet = false)
+
+        // then
+        assertEquals(TEXT, result)
     }
 
     @Test
+    @ExperimentalCoroutinesApi
     fun `should decode given file with basic alphabet`() {
+        // given
+        val file = createTempFile().apply { writeText(TEXT_ENCODED) }
 
+        // when
+        val result = decipher(file, KEY, useFullNumberKeyName = false, useExtendedAlphabet = false)
+
+        // then
+        assertEquals(TEXT, result.readText())
     }
 }

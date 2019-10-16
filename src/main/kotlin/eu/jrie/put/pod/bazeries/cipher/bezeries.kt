@@ -2,6 +2,7 @@ package eu.jrie.put.pod.bazeries.cipher
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import pl.allegro.finance.tradukisto.ValueConverters
@@ -12,8 +13,8 @@ typealias Receiver<R> = suspend (Flow<Char>) -> R
 
 internal class Bazeries (
     private val key: Int,
-    private val useExtendedAlphabet: Boolean = false,
-    private val useFullNumberName: Boolean = false
+    private val useFullNumberName: Boolean = false,
+    private val useExtendedAlphabet: Boolean = false
 ) {
 
     private val alphabet = if(useExtendedAlphabet) EXTENDED_ALPHABET else ALPHABET
@@ -58,37 +59,44 @@ internal class Bazeries (
     private fun mapToCode(l: Char) = findInMatrix(alphabetMatrix, l).let { codeMatrix[it.first][it.second] }
     private fun mapToAlphabet(l: Char) = findInMatrix(codeMatrix, l).let { alphabetMatrix[it.first][it.second] }
 
-    private fun chunkText(text: InputStream) = flow {
-        text.use { input ->
-            var hasNext = true
-            while (hasNext) {
-                Stack<Char>().apply {
-                    repeat(chunkSize) {
-                        if (input.available() > 0) this.push(input.read().toChar())
-                        else hasNext = false
-                    }
-                }.let { emit(it) }
-                chunker()
-            }
-        }
-    }
-
     fun <R> encode(textStream: InputStream, receiver: Receiver<R>) = textStream.process(::mapToCode, receiver)
     fun <R> decode(textStream: InputStream, receiver: Receiver<R>) = textStream.process(::mapToAlphabet, receiver)
-
-    private fun String.inAlphabet() = filter { alphabet.contains(it) }
 
     private fun <R> InputStream.process(mapper: (Char) -> Char, receiver: Receiver<R>) = runBlocking {
         println("key: $key")
         println("keyword: $keyword")
         flow {
-            chunkText(this@process).collect { chunk: Stack<Char> ->
+            chunkText(getAndFilterCharacters(this@process)).collect { chunk ->
                 while (chunk.isNotEmpty()) {
                     emit(mapper(chunk.pop()))
                 }
             }
         }.let { receiver(it) }
     }
+
+    private fun getAndFilterCharacters(text: InputStream) = flow {
+        text.use {
+            while (it.available() > 0) emit(it.read().toChar())
+        }
+    } .filter { alphabet.contains(it) }
+
+    private fun chunkText(text: Flow<Char>) = flow {
+        var stack = Stack<Char>()
+        var counter = 0
+        text.collect {
+            if (counter >= chunkSize) {
+                emit(stack)
+                stack = Stack()
+                counter = 0
+                chunker()
+            }
+            stack.push(it)
+            counter++
+        }
+        if(stack.isNotEmpty()) emit(stack)
+    }
+
+    private fun String.inAlphabet() = filter { alphabet.contains(it) }
 
     companion object {
         private const val ALPHABET = "abcdefghiklmnopqrstuvwxyz"
@@ -129,5 +137,7 @@ internal class Bazeries (
                 = buildMatrix(letters, width) { x, y -> (y + (x * height)).also { print(it) } }
         private fun buildCipher(letters: String, width: Int, height: Int)
                 = buildMatrix(letters, width) { x, y -> x + (y * width) }
+
+        fun randomKey() = (1..999_999).random()
     }
 }

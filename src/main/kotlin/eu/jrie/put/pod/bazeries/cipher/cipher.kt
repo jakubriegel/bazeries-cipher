@@ -1,68 +1,76 @@
 package eu.jrie.put.pod.bazeries.cipher
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectIndexed
 import java.io.File
 import java.io.InputStream
 
-fun cipher(text: String, key: Int = (1..999_999).random()): String {
-    println("encoding: $text")
-    val result = CharArray(text.length).apply {
-        var i = 0
-        cipher(text.byteInputStream(), key) { flow ->
-            flow.collect { set(i++, it) }
-        }
+@ExperimentalCoroutinesApi
+fun cipher(
+    text: String, key: Int = Bazeries.randomKey(), useFullNumberKeyName: Boolean = true, useExtendedAlphabet: Boolean = false
+): String = cipherText(text, key, useFullNumberKeyName, useExtendedAlphabet, ::cipher)
+
+fun cipher(
+    textFile: File, key: Int = Bazeries.randomKey(), useFullNumberKeyName: Boolean = true, useExtendedAlphabet: Boolean = false
+): File = cipherFile(textFile, key, useFullNumberKeyName, useExtendedAlphabet, ::cipher)
+
+private fun <R> cipher(
+    stream: InputStream, key: Int, useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
+    receiver: suspend (Flow<Char>) -> R
+) = Bazeries(key, useFullNumberKeyName, useExtendedAlphabet).encode(stream, receiver)
+
+@ExperimentalCoroutinesApi
+fun decipher(
+    text: String, key: Int, useFullNumberKeyName: Boolean = true, useExtendedAlphabet: Boolean = false
+): String = cipherText(text, key, useFullNumberKeyName, useExtendedAlphabet, ::decipher)
+
+fun decipher(
+    textFile: File, key: Int, useFullNumberKeyName: Boolean = true, useExtendedAlphabet: Boolean = false
+): File = cipherFile(textFile, key, useFullNumberKeyName, useExtendedAlphabet, ::decipher)
+
+private fun <R> decipher(
+    stream: InputStream, key: Int, useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
+    receiver: suspend (Flow<Char>) -> R
+) = Bazeries(key, useFullNumberKeyName, useExtendedAlphabet).decode(stream, receiver)
+
+@ExperimentalCoroutinesApi
+private fun cipherText(
+    text: String, key: Int, useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
+    cipherAction: (InputStream, Int, Boolean, Boolean, suspend (Flow<Char>) -> Unit) -> Unit
+): String = CharArray(text.length).apply {
+    println("coding: $this")
+    cipherAction(text.byteInputStream(), key, useFullNumberKeyName, useExtendedAlphabet) { flow ->
+        flow.collectIndexed { i, value -> set(i, value) }
     }
-    return String(result).also { println("result: $it") }
-}
+} .let { result -> String(result).also { println("result: $it") } }
 
-fun cipher(textFile: File, key: Int = (1..999_999).random()): File {
-    println("encoding file: ${textFile.name}")
-    val resultFile = File(textFile.absolutePath.plus(".enc"))
-    return cipher(textFile.inputStream(), key) {
-        saveResultToFile(it, resultFile)
-    } .also { println("result file: ${resultFile.name}") }
-}
 
-private fun <R> cipher(stream: InputStream, key: Int, receiver: suspend (Flow<Char>) -> R)
-        = Bazeries(key).encode(stream, receiver)
-
-fun decipher(text: String, key: Int = (1..999_999).random()): String {
-    println("decoding: $text")
-    val result = CharArray(text.length).apply {
-        var i = 0
-        decipher(text.byteInputStream(), key) { flow ->
-            flow.collect { set(i++, it) }
-        }
+private fun cipherFile(
+    textFile: File, key: Int = Bazeries.randomKey(), useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
+    cipherAction: (InputStream, Int, Boolean, Boolean, suspend (Flow<Char>) -> Unit) -> Unit
+): File = File(textFile.absolutePath.plus(".bz"))
+    .apply { delete() }
+    .apply {
+        cipherAction(textFile.inputStream(), key, useFullNumberKeyName, useExtendedAlphabet) {
+            saveResult(it)
+        } .also { println("result file: $name") }
     }
-    return String(result).also { println("result: $it") }
-}
 
-fun decipher(textFile: File, key: Int = (1..999_999).random()): File {
-    println("decoding file: ${textFile.name}")
-    val resultFile = File(textFile.absolutePath.plus(".dec"))
-    return decipher(textFile.inputStream(), key) {
-        saveResultToFile(it, resultFile)
-    } .also { println("result file: ${resultFile.name}") }
-}
-
-fun <R> decipher(stream: InputStream, key: Int, receiver: suspend (Flow<Char>) -> R)
-        = Bazeries(key).decode(stream, receiver)
-
-const val WRITE_PACKET_SIZE = 256
-private suspend fun saveResultToFile(flow: Flow<Char>, file: File): File {
+private const val WRITE_PACKET_SIZE = 256
+private suspend fun File.saveResult(flow: Flow<Char>) {
     ByteArray(WRITE_PACKET_SIZE).let { buffer ->
         var size = 0
         flow.collect { l ->
             buffer[size++] = l.toByte()
             if(size >= WRITE_PACKET_SIZE) {
-                file.appendBytes(buffer)
+                appendBytes(buffer)
                 size = 0
             }
         }
         if(size > 0) {
-            file.appendBytes(buffer.sliceArray(0 until size))
+            appendBytes(buffer.sliceArray(0 until size))
         }
     }
-    return file
 }
