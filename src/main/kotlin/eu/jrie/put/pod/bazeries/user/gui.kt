@@ -1,9 +1,11 @@
 package eu.jrie.put.pod.bazeries.user
 
+import com.sandec.mdfx.MDFXNode
 import eu.jrie.put.pod.bazeries.cipher.cipher
 import eu.jrie.put.pod.bazeries.cipher.decipher
 import javafx.geometry.Side
 import javafx.scene.control.TextArea
+import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,12 +16,14 @@ import tornadofx.Drawer
 import tornadofx.DrawerItem
 import tornadofx.View
 import tornadofx.action
+import tornadofx.attachTo
 import tornadofx.button
 import tornadofx.checkbox
 import tornadofx.drawer
 import tornadofx.hbox
 import tornadofx.label
 import tornadofx.launch
+import tornadofx.scrollpane
 import tornadofx.style
 import tornadofx.textarea
 import tornadofx.textfield
@@ -33,7 +37,7 @@ fun gui() {
 class AppGUI : App(AppView::class) {
     override fun start(stage: Stage) {
         stage.isResizable = false
-        super.start(stage   )
+        super.start(stage)
     }
 }
 
@@ -56,6 +60,7 @@ class AppView : View() {
     }
 
     private fun Drawer.configDrawer() {
+        stylesheets.add("/com/sandec/mdfx/mdfx-default.css")
         dockingSide = Side.TOP
         style {
             minWidth = Dimension(500.0, Dimension.LinearUnits.px)
@@ -127,9 +132,6 @@ class AppView : View() {
                     )
                 }
             }
-            style {
-                minWidth = Dimension(500.0, Dimension.LinearUnits.px)
-            }
         }
     }
 
@@ -171,12 +173,28 @@ class AppView : View() {
         }
     }
 
-    private fun Drawer.algorithmItem()  = drawerItem("algorithm") {
-        label("cool2")
+    private fun Drawer.algorithmItem() = drawerItem("algorithm") {
+        textContent("algorithm.md")
     }
 
     private fun Drawer.aboutItem() = drawerItem("about") {
-        label("cool3")
+        textContent("about.md")
+    }
+
+    private fun DrawerItem.textContent(name: String) {
+        scrollpane {
+            this::class.java.getResource("/textcontent/$name")
+                .readText()
+                .let { MDFXNode(it).attachTo(this) {
+                    style {
+                        maxWidth = Dimension(460.0, Dimension.LinearUnits.px)
+                    }
+                } }
+
+            style {
+                backgroundColor += Color.WHITE
+            }
+        }
     }
 
     private fun Drawer.drawerItem(name: String, content: DrawerItem.() -> Unit) = item(name) {
@@ -187,6 +205,8 @@ class AppView : View() {
                 bottom = Dimension(15.0, Dimension.LinearUnits.px),
                 left = Dimension(20.0, Dimension.LinearUnits.px)
             )
+            minWidth = Dimension(500.0, Dimension.LinearUnits.px)
+
         }
         content()
     }

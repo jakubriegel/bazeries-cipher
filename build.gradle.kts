@@ -11,6 +11,7 @@ version = "1.0"
 
 repositories {
     mavenCentral()
+    maven("http://sandec.bintray.com/repo")
 }
 
 dependencies {
@@ -25,10 +26,10 @@ dependencies {
 
     // gui
     implementation("no.tornado:tornadofx:1.7.17")
+    implementation("com.sandec:mdfx:0.1.6")
 
     // test
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.0")
-    testImplementation("io.mockk:mockk:1.9.3")
 }
 
 javafx {
