@@ -16,9 +16,9 @@ fun cipher(
 ): File = cipherFile(textFile, key, useFullNumberKeyName, useExtendedAlphabet, ::cipher)
 
 private fun <R> cipher(
-    stream: Sequence<Char>, key: Int, useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
+    text: Sequence<Char>, key: Int, useFullNumberKeyName: Boolean, useExtendedAlphabet: Boolean,
     receiver: suspend (Flow<Char>) -> R
-) = Bazeries(key, useFullNumberKeyName, useExtendedAlphabet).encode(stream, receiver)
+) = Bazeries(key, useFullNumberKeyName, useExtendedAlphabet).encode(text, receiver)
 
 @ExperimentalCoroutinesApi
 fun decipher(

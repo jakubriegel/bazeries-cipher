@@ -135,17 +135,25 @@ class AppView : View() {
 
     @ExperimentalCoroutinesApi
     private fun encodeAction(text: CharSequence, key: CharSequence, useFullNumberNameKey: Boolean, useExtendedAlphabet: Boolean) {
-        when(mode) {
+        codedContent.text = when(mode) {
             Mode.TEXT -> {
                 println(text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
                 when(key.isBlank()) {
-                    true -> codedContent.text = cipher(text.toString(), useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet)
-                    false ->codedContent.text = cipher(text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet)
+                    true ->  cipher(
+                        text.toString(), useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet
+                    )
+                    false -> cipher(
+                        text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet
+                    )
                 }
             }
             Mode.FILE -> {when(key.isBlank()) {
-                true -> codedContent.text = cipher(sourceFile, useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet).name
-                false ->codedContent.text = cipher(sourceFile, "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet).name
+                true -> cipher(
+                    sourceFile, useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet
+                ).name
+                false -> cipher(
+                    sourceFile, "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet
+                ).name
             }}
         }
     }

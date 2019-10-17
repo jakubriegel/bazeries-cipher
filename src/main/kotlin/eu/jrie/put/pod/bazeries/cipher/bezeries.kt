@@ -3,11 +3,9 @@ package eu.jrie.put.pod.bazeries.cipher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import pl.allegro.finance.tradukisto.ValueConverters
-import java.io.InputStream
 import java.util.*
 
 typealias Receiver<R> = suspend (Flow<Char>) -> R
@@ -75,26 +73,6 @@ internal class Bazeries (
         }.let { receiver(it) }
     }
 
-    private fun getAndFilterCharacters(text: Sequence<Char>) = text.filter { alphabet.contains(it) } .asFlow()
-
-    private fun <R> InputStream.process(mapper: (Char) -> Char, receiver: Receiver<R>) = runBlocking {
-        println("key: $key")
-        println("keyword: $keyword")
-        flow {
-            chunkText(getAndFilterCharacters(this@process)).collect { chunk ->
-                while (chunk.isNotEmpty()) {
-                    emit(mapper(chunk.pop()))
-                }
-            }
-        }.let { receiver(it) }
-    }
-
-    private fun getAndFilterCharacters(text: InputStream) = flow {
-        text.use {
-            while (it.available() > 0) emit(it.read().toChar())
-        }
-    } .filter { alphabet.contains(it) }
-
     private fun chunkText(text: Flow<Char>) = flow {
         var stack = Stack<Char>()
         var counter = 0
@@ -110,6 +88,8 @@ internal class Bazeries (
         }
         if(stack.isNotEmpty()) emit(stack)
     }
+
+    private fun getAndFilterCharacters(text: Sequence<Char>) = text.filter { alphabet.contains(it) } .asFlow()
 
     private fun String.inAlphabet() = filter { alphabet.contains(it) }
 
@@ -138,9 +118,9 @@ internal class Bazeries (
             '9' to "nine"
         )
 
-        private inline fun buildMatrix(letters: String, width: Int, index: (Int, Int) -> Int) = Array(letters.length / width) { y ->
-            Array(width) { x -> letters[index(x, y)].also { println(" $x $y $it") } }
-        }.also {
+        private inline fun buildMatrix(
+            letters: String, width: Int, index: (Int, Int) -> Int) = Array(letters.length / width
+        ) { y -> Array(width) { x -> letters[index(x, y)] } }.also {
             it.forEach { a ->
                 a.forEach { l -> print("$l ") }
                 println()

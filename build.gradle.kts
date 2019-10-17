@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.3.50"
     id("com.github.johnrengelman.shadow") version "5.1.0"
+    id("org.openjfx.javafxplugin") version "0.0.8"
 }
 
 group = "eu.jrie.put.pod"
@@ -24,11 +25,15 @@ dependencies {
 
     // gui
     implementation("no.tornado:tornadofx:1.7.17")
-    implementation("org.openjfx:javafx:13")
 
     // test
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.0")
     testImplementation("io.mockk:mockk:1.9.3")
+}
+
+javafx {
+    version = "11"
+    modules = listOf("javafx.controls")
 }
 
 tasks {
@@ -42,7 +47,6 @@ tasks {
         setProperty("archiveBaseName", "bazeries")
         setProperty("archiveClassifier", "")
         setProperty("version", "")
-        mainClasses
         manifest {
             attributes("Main-Class" to "eu.jrie.put.pod.bazeries.AppKt")
         }
