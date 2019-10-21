@@ -142,10 +142,10 @@ class AppView : View() {
                 println(text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8))
                 when(key.isBlank()) {
                     true ->  cipher(
-                        text.toString(), useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet
+                        text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), useFullNumberKeyName = useFullNumberNameKey, useExtendedAlphabet = useExtendedAlphabet
                     )
                     false -> cipher(
-                        text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet
+                        text.toString().toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8).toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8), "$key".toInt(), useFullNumberNameKey, useExtendedAlphabet
                     )
                 }
             }

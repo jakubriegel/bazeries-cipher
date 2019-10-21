@@ -58,12 +58,10 @@ private fun cipherFile(
     }
 
 fun File.charSequence(): Sequence<Char> {
-    return bufferedReader(Charsets.UTF_8).lineSequence().let { lines ->
-        sequence {
-            lines.forEach { l ->
-                l.forEach { yield(it) }
-                yield('\n')
-            }
+    return sequence {
+        bufferedReader(Charsets.UTF_8).lineSequence().forEach { l ->
+            l.forEach { yield(it) }
+            yield('\n')
         }
     }
 }
@@ -75,7 +73,6 @@ private suspend fun File.saveResult(flow: Flow<Char>) {
         flow.collect { l ->
             buffer[size++] = l
             if(size >= WRITE_PACKET_SIZE) {
-                this.writer().append()
                 appendText(String(buffer), Charsets.UTF_8)
                 size = 0
             }

@@ -3,6 +3,7 @@ package eu.jrie.put.pod.bazeries.cipher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import pl.allegro.finance.tradukisto.ValueConverters
@@ -89,7 +90,7 @@ internal class Bazeries (
         if(stack.isNotEmpty()) emit(stack)
     }
 
-    private fun getAndFilterCharacters(text: Sequence<Char>) = text.filter { alphabet.contains(it) } .asFlow()
+    private fun getAndFilterCharacters(text: Sequence<Char>) = text.asFlow().filter { alphabet.contains(it) }
 
     private fun String.inAlphabet() = filter { alphabet.contains(it) }
 
