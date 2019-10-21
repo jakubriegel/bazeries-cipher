@@ -59,7 +59,7 @@ internal class Bazeries (
     private fun mapToAlphabet(l: Char) = findInMatrix(codeMatrix, l).let { alphabetMatrix[it.first][it.second] }
 
     fun <R> encode(textSequence: Sequence<Char>, receiver: Receiver<R>) = textSequence.process(::mapToCode, receiver)
-    fun <R> decode(textStream: Sequence<Char>, receiver: Receiver<R>) = textStream.process(::mapToAlphabet, receiver)
+    fun <R> decode(textSequence: Sequence<Char>, receiver: Receiver<R>) = textSequence.process(::mapToAlphabet, receiver)
 
     private fun <R> Sequence<Char>.process(mapper: (Char) -> Char, receiver: Receiver<R>) = runBlocking {
         println("key: $key")
